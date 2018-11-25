@@ -70,7 +70,7 @@ describe('check: checkIf middleware', () => {
     const conditions = [check('foo').equals('foo'), check('bar').equals('bar')];
     const validations = [
       check('foo').equals('notfoo').withMessage('notfoo'),
-      check('bar').equals('notbar').withMessage('bar'),
+      check('bar').equals('notbar').withMessage('bar')
     ];
 
     return checkIf(conditions, validations)(req, {}, () => {}).then(() => {
