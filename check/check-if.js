@@ -1,4 +1,5 @@
 const runner = require('./runner');
+const { oneOfRunner } = require('./one-of');
 
 module.exports = (conditions, validators) => {
   conditions = Array.isArray(conditions) ? conditions : [conditions];
@@ -6,10 +7,17 @@ module.exports = (conditions, validators) => {
 
   return (req, res, next) => {
     return conditions
+      .filter(condition => condition)
       .reduce((promise, condition) => {
         return promise.then(() => {
-          if (condition && condition._context) {
+          if (condition._context) {
             return runner(req, condition._context);
+          } else if (condition._oneOfContexts) {
+            return oneOfRunner(req, condition._oneOfContexts).then(results => {
+              return results.length && results.every(result => result.length)
+                ? results
+                : [];
+            });
           }
 
           return [];

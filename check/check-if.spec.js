@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { check, checkIf, validationResult } = require('./index');
+const { check, checkIf, oneOf, validationResult } = require('./index');
 
 const customResult = validationResult.withDefaults({
   formatter: ({ msg }) => msg
@@ -55,6 +55,28 @@ describe('check: checkIf middleware', () => {
     ];
 
     return checkIf(conditions, validations)(req, {}, () => {}).then(() => {
+      expect(customResult(req).mapped()).to.eql({
+        foo: 'notfoo',
+        bar: 'bar'
+      });
+    });
+  });
+
+  it('runs conditions that are built using oneOf()', () => {
+    const req = {
+      query: { foo: 'foo', bar: 'notbar' }
+    };
+
+    const condition = oneOf([
+      check('bar').equals('bar'),
+      check('foo').equals('foo')
+    ]);
+    const validations = [
+      check('foo').equals('notfoo').withMessage('notfoo'),
+      check('bar').equals('bar').withMessage('bar')
+    ];
+
+    return checkIf(condition, validations)(req, {}, () => {}).then(() => {
       expect(customResult(req).mapped()).to.eql({
         foo: 'notfoo',
         bar: 'bar'

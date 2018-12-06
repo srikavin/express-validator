@@ -1,19 +1,15 @@
 const _ = require('lodash');
 const runner = require('./runner');
 
-module.exports = (validationChains, message) => (req, res, next) => {
-  const run = chain => runner(req, getContext(chain));
-
+module.exports = exports = (validationChains, message) => {
   const contexts = _.flatMap(validationChains, chain => {
     return Array.isArray(chain) ? chain.map(getContext) : getContext(chain);
   });
 
-  const promises = validationChains.map(chain => {
-    const group = Array.isArray(chain) ? chain : [chain];
-    return Promise.all(group.map(run)).then(results => _.flatten(results));
-  });
-
-  return Promise.all(promises).then(results => {
+  const middleware = (req, res, next) => exports.oneOfRunner(
+    req,
+    validationChains
+  ).then(results => {
     req._validationContexts = (req._validationContexts || []).concat(contexts);
     req._validationErrors = req._validationErrors || [];
 
@@ -32,6 +28,20 @@ module.exports = (validationChains, message) => (req, res, next) => {
     next();
     return results;
   }).catch(next);
+
+  middleware._oneOfContexts = validationChains;
+  return middleware;
+};
+
+exports.oneOfRunner = (req, validationChains) => {
+  const run = chain => runner(req, getContext(chain));
+
+  const promises = validationChains.map(chain => {
+    const group = Array.isArray(chain) ? chain : [chain];
+    return Promise.all(group.map(run)).then(results => _.flatten(results));
+  });
+
+  return Promise.all(promises);
 };
 
 function getContext(chain) {
