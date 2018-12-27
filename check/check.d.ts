@@ -77,6 +77,8 @@ export interface Validator {
   optional(options?: ValidatorOptions.OptionalOptions): this;
   withMessage(message: CustomMessageBuilder): this;
   withMessage(message: any): this;
+  withData(data: any) : this;
+  withData(data: any, spread: boolean) : this;
 }
 
 export interface ValidationChain extends express.RequestHandler, Validator, Sanitizer {
